@@ -17,6 +17,6 @@
 /* Use Fisy's dedicated speaking portrait rather than a cropped full-body pose. */
 .coach-stage{width:330px;height:365px;place-items:center}
 .coach-stage img{display:none}
-.coach-stage::after{content:"";position:relative;z-index:1;display:block;width:300px;height:300px;background:url('./assets/avatars/ChatGPT_Image_Aug_22__2026_at_02_12_41_PM-removebg-preview.png?v=3') center/contain no-repeat;filter:drop-shadow(0 18px 14px #00000055)}
+.coach-stage::after{content:"";position:relative;z-index:1;display:block;width:300px;height:300px;background:url('./assets/avatars/ChatGPT_Image_Aug_22__2026_at_02_12_41_PM-removebg-preview.png?v=3') center/contain no-repeat;filter:drop-shadow(0 18px 14px #00000055);-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 72%,transparent 100%);mask-image:linear-gradient(to bottom,#000 0%,#000 72%,transparent 100%)}
 .coach-glow{inset:34px 18px 38px}
 @media (max-width:850px){.coach-stage{width:300px;height:335px}.coach-stage::after{width:275px;height:275px}}
