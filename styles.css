@@ -130,8 +130,8 @@ footer{padding:67px 0 24px;color:#b9c6dc;background:var(--navy)}
 .brand-light{color:#fff}
 .footer-main{display:flex;justify-content:space-between;gap:50px;padding-bottom:65px}
 .footer-main>div>p{margin:18px 0 0;font-size:13px}
-.footer-links{display:flex;gap:86px}
-.footer-links>div{display:flex;flex-direction:column;gap:9px;min-width:115px;font-size:12px}
+.footer-links{display:flex;flex-wrap:wrap;gap:56px}
+.footer-links>div{display:flex;flex-direction:column;gap:9px;min-width:104px;font-size:12px}
 .footer-links b{margin-bottom:8px;color:#fff;font-size:11px;text-transform:uppercase;letter-spacing:.12em}
 .footer-links a{color:#a6b7d2}
 .footer-note{padding-bottom:22px;border-top:1px solid #ffffff1a;padding-top:22px}
@@ -151,13 +151,14 @@ footer{padding:67px 0 24px;color:#b9c6dc;background:var(--navy)}
 /* ===== below 951px / short viewports: no camera. Six plain stacked
    sections, the phone shown once with its home screen. ===== */
 @media (max-width:950px){
-  .stage{padding:106px 0 70px}
-  .stage-inner{grid-template-columns:1fr;gap:44px}
+  .stage{padding:98px 0 64px}
+  .stage-inner{grid-template-columns:1fr;gap:28px;justify-items:center}
   .world{order:-1}
   .copy-strip{gap:60px}
+  .copy{width:100%}
   .device{height:min(560px,66svh);margin:auto}
   .orbit{display:none}
-  .fisy,.bubble,.float-card{display:none}
+  .bubble,.float-card{display:none}
   .site-header nav{position:absolute;display:none;top:70px;left:18px;right:18px;padding:18px;flex-direction:column;align-items:stretch;gap:3px;border:1px solid var(--line);border-radius:20px;background:#fff;box-shadow:0 22px 55px #1421501f}
   .site-header nav.open{display:flex}
   .site-header nav a{padding:12px}
@@ -167,12 +168,12 @@ footer{padding:67px 0 24px;color:#b9c6dc;background:var(--navy)}
   .faq-inner{grid-template-columns:1fr;gap:34px}
   .get-strip{margin-top:60px;padding:38px 30px}
   .footer-main{flex-direction:column;padding-bottom:45px}
-  .footer-links{flex-wrap:wrap;gap:35px}
+  .footer-links{flex-wrap:wrap;gap:30px 36px}
   .footer-bottom{gap:10px;flex-direction:column}
   .stores a,.stores button{min-width:0;flex:1}
 }
 @media (max-width:540px){
-  .slot h1,.slot h2,.faq-head h2{font-size:clamp(34px,9vw,46px)}
+  .slot h1,.slot h2,.faq-head h2{font-size:clamp(30px,8vw,40px)}
   .stage-lead{font-size:15px}
   .hero-actions{align-items:flex-start;flex-direction:column;gap:16px}
   .stores{flex-direction:column}
@@ -257,11 +258,33 @@ footer{padding:67px 0 24px;color:#b9c6dc;background:var(--navy)}
     .get-strip .stores button:nth-child(2){animation-range:entry 28% entry 78%}
   }
 
-  @media (min-width:951px) and (min-height:720px){
+  @media (min-height:560px){
     @supports (animation-timeline:view()){
       .story{height:var(--travel)}
       .stage{position:sticky;top:0;height:100svh;padding:88px 0 60px;display:grid;align-content:center}
-      .copy{overflow:clip;height:min(560px,68svh)}
+      .copy{overflow:clip}
+
+      @media (max-width:950px){
+        .stage{padding:84px 0 40px}
+        .stage-inner{grid-template-columns:1fr;gap:20px;align-content:center;justify-items:center}
+        .device{height:min(360px,40svh)}
+        .copy{width:100%;height:min(260px,30svh)}
+        .slot{text-align:center;justify-items:center}
+        .slot h1,.slot h2{margin-bottom:12px;font-size:clamp(26px,7.2vw,34px)}
+        .stage-lead{font-size:14px;max-width:34ch;margin-inline:auto}
+        .slot .stores{justify-content:center;flex-wrap:wrap;gap:8px}
+        .slot .stores button{min-width:0;flex:1 1 140px;padding:9px 12px}
+        .slot .stores span{font-size:12px}
+        .slot .trust-row{justify-content:center;margin-top:18px}
+        .slot .hero-actions{justify-content:center;margin-top:16px}
+        .badge{margin-top:12px}
+        .store-note{text-align:center}
+        .fisy{height:min(300px,34svh)}
+        .stage-cta{display:none}
+      }
+      @media (min-width:951px){
+        .copy{overflow:clip;height:min(560px,68svh)}
+      }
       .copy-strip{display:block;height:600%;gap:0}
       .slot{height:16.6667%;display:grid;align-content:center}
       .stage-cta{display:flex;align-items:center;gap:22px;position:absolute;left:0;bottom:5svh;z-index:8;padding-inline-start:18px}
@@ -280,6 +303,7 @@ footer{padding:67px 0 24px;color:#b9c6dc;background:var(--navy)}
       .shot-strip{animation-name:lf-shots}
       .world{animation-name:lf-dolly;will-change:scale}
       .rig{animation-name:lf-rig;will-change:translate}
+      @media (max-width:950px){.rig{animation-name:none;translate:0}}
       .device{animation-name:lf-frame}
       .fisy{animation-name:lf-fisy;will-change:transform}
       .orbit-a,.orbit-b{animation-name:lf-orbit-out}

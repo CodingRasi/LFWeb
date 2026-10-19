@@ -21,7 +21,7 @@ const calm=matchMedia('(prefers-reduced-motion:reduce)').matches;
 const hasIO='IntersectionObserver'in window;
 const hasTimeline=typeof CSS!=='undefined'&&CSS.supports&&CSS.supports('animation-timeline','view()');
 const story=document.querySelector('.story');
-const pinned=()=>hasTimeline&&!calm&&innerWidth>=951&&innerHeight>=720;
+const pinned=()=>hasTimeline&&!calm&&innerHeight>=560;
 const progress=()=>{
   if(!story)return 0;
   const r=story.getBoundingClientRect(),span=r.height-innerHeight;

@@ -1,0 +1,60 @@
+# Lingofisy
+
+> Lingofisy is an English language-learning mobile app for iOS and Android. It
+> teaches practical, everyday English through short daily lessons, AI speaking
+> practice with spoken feedback, and spaced vocabulary review. The in-app coach
+> is named Fisy.
+
+Lingofisy is operated from Berlin, Germany by Rasul Mammadov. The app is in
+development; the website currently announces it ahead of the App Store and
+Google Play listings.
+
+## What Lingofisy does
+
+- **Placement first.** A short placement experience sets the starting level
+  instead of dropping every learner into the same beginner track.
+- **Short daily lessons.** Most daily activities take about 5 to 10 focused
+  minutes, built around vocabulary, grammar, quizzes and sentence-building games.
+- **AI speaking practice.** Learners speak out loud and receive feedback on
+  clarity and expression rather than on accent. Unlimited speaking practice is
+  part of the paid Lingofisy Pro subscription.
+- **Review that remembers.** Spaced repetition returns saved vocabulary before
+  it is forgotten.
+- **Progress tracking.** Streaks, XP, coins and weekly accuracy.
+
+## Learning paths
+
+- **General English** (CEFR A1 to C1) for everyday conversation and confidence.
+- **Business English** (B1 to C1) for meetings, email and presentations.
+- **IELTS preparation**, band-focused practice across speaking, listening,
+  reading and writing. Lingofisy is independent and is not affiliated with,
+  sponsored by or endorsed by the organizations that own or administer IELTS.
+
+## Who it is for
+
+Adult and young-adult learners who want usable English for work, travel, study
+and conversation, from beginner through advanced. Available in English.
+
+## Key pages
+
+- [Homepage](https://lingofisy.com/): what the app does, screens, learning paths.
+- [Terms of Use](https://lingofisy.com/legal/terms.html): subscriptions, AI
+  features, cancellation and refunds, IELTS disclaimer.
+- [Privacy Policy](https://lingofisy.com/legal/privacy.html): GDPR disclosures,
+  processors, audio and AI data handling, data-subject rights.
+- [Imprint](https://lingofisy.com/legal/imprint.html): operator details under
+  Section 5 DDG.
+
+## Official accounts
+
+These are the only official Lingofisy profiles:
+
+- X: https://x.com/lingofisy
+- Instagram: https://www.instagram.com/lingofisy/
+- TikTok: https://www.tiktok.com/@lingofisy
+- YouTube: https://www.youtube.com/@lingofisy
+- LinkedIn: https://www.linkedin.com/company/lingofisy
+
+## Contact
+
+webmaster@lingofisy.com
