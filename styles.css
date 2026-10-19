@@ -37,7 +37,7 @@ h1 em,h2 em{font-style:normal;color:var(--blue)}
 .stores{display:flex;gap:10px;margin-top:26px}
 .stores a,.stores button{cursor:pointer;text-align:left;font:inherit;display:flex;align-items:center;gap:10px;min-width:176px;padding:12px 16px;border:1px solid var(--line);border-radius:13px;color:var(--navy);background:#fff;box-shadow:0 10px 22px #14215014;transition:transform .2s,box-shadow .2s}
 .stores a:hover,.stores button:hover{transform:translateY(-2px);box-shadow:0 14px 26px #1421501f}
-.stores a>b,.stores button>b{font:28px Arial;line-height:1}
+.stores a>b,.stores button>b{font:28px -apple-system,BlinkMacSystemFont,"Segoe UI Symbol",Arial;line-height:1}
 .stores a span,.stores button span{font-size:14px;font-weight:700;line-height:1.25}
 .stores small{display:block;font-size:8px;color:var(--muted)}
 .store-note{display:block;margin-top:13px;color:var(--muted);font-size:10px}
@@ -91,6 +91,7 @@ h1 em,h2 em{font-style:normal;color:var(--blue)}
 /* the phone: one frame, a filmstrip of real captures inside it */
 .device{position:relative;z-index:2;height:min(590px,64svh);aspect-ratio:390/844;padding:0;border:10px solid #0d1733;border-radius:44px;background:#0d1733;box-shadow:0 34px 72px #14215045}
 .viewport{position:relative;height:100%;overflow:hidden;border-radius:34px;background:#eef4fd}
+.device{--shot-ar:390/844}
 .shot-strip{display:block;height:1100%}
 .shot{display:block;width:100%;height:9.0909%;object-fit:cover;object-position:top center}
 
@@ -177,7 +178,7 @@ footer{padding:67px 0 24px;color:#b9c6dc;background:var(--navy)}
   .stage-lead{font-size:15px}
   .hero-actions{align-items:flex-start;flex-direction:column;gap:16px}
   .stores{flex-direction:column}
-  .device{height:min(480px,62svh)}
+  .device{width:min(290px,82vw)}
 }
 
 
@@ -209,6 +210,7 @@ footer{padding:67px 0 24px;color:#b9c6dc;background:var(--navy)}
 @keyframes lf-shots{0.0%,16.13%{translate:0 0}20.43%,24.73%{translate:0 -9.0909%}26.88%,31.18%{translate:0 -18.1818%}33.33%,38.71%{translate:0 -27.2727%}40.86%,45.16%{translate:0 -36.3636%}47.31%,51.61%{translate:0 -45.4545%}53.76%,67.74%{translate:0 -54.5455%}72.04%,77.42%{translate:0 -63.6364%}79.57%,83.87%{translate:0 -72.7273%}86.02%,90.32%{translate:0 -81.8182%}92.47%,100.0%{translate:0 -90.9091%}}
 
 /* the camera */
+@keyframes lf-dolly-m{0.0%,7.53%{translate:0 0;scale:1}20.43%,63.44%{translate:0 -31.5svh;scale:1.58}72.04%,100%{translate:0 0;scale:1}}
 @keyframes lf-dolly{0.0%,7.53%{scale:1}20.43%,63.44%{scale:1.24}72.04%,100.0%{scale:1}}
 @keyframes lf-rig{0.0%,7.53%{translate:0 0}20.43%,63.44%{translate:-26% 0}72.04%,100.0%{translate:0 0}}
 @keyframes lf-frame{0.0%,7.53%{border-radius:44px;border-width:10px}20.43%,63.44%{border-radius:36px;border-width:7px}72.04%,100.0%{border-radius:44px;border-width:10px}}
@@ -264,23 +266,8 @@ footer{padding:67px 0 24px;color:#b9c6dc;background:var(--navy)}
       .stage{position:sticky;top:0;height:100svh;padding:88px 0 60px;display:grid;align-content:center}
       .copy{overflow:clip}
 
-      @media (max-width:950px){
-        .stage{padding:84px 0 40px}
-        .stage-inner{grid-template-columns:1fr;gap:20px;align-content:center;justify-items:center}
-        .device{height:min(360px,40svh)}
-        .copy{width:100%;height:min(260px,30svh)}
-        .slot{text-align:center;justify-items:center}
-        .slot h1,.slot h2{margin-bottom:12px;font-size:clamp(26px,7.2vw,34px)}
-        .stage-lead{font-size:14px;max-width:34ch;margin-inline:auto}
-        .slot .stores{justify-content:center;flex-wrap:wrap;gap:8px}
-        .slot .stores button{min-width:0;flex:1 1 140px;padding:9px 12px}
-        .slot .stores span{font-size:12px}
-        .slot .trust-row{justify-content:center;margin-top:18px}
-        .slot .hero-actions{justify-content:center;margin-top:16px}
-        .badge{margin-top:12px}
-        .store-note{text-align:center}
-        .fisy{height:min(300px,34svh)}
-        .stage-cta{display:none}
+      @media (min-width:951px){
+        .copy{overflow:clip;height:min(560px,68svh)}
       }
       @media (min-width:951px){
         .copy{overflow:clip;height:min(560px,68svh)}
@@ -320,6 +307,38 @@ footer{padding:67px 0 24px;color:#b9c6dc;background:var(--navy)}
       .float-left{top:44%;animation-name:lf-out-l;animation-range:contain 34.41% contain 46.24%}
       .bubble-b{top:66%;animation-name:lf-out-r;animation-range:contain 43.01% contain 54.84%}
       .float-right{top:34%;animation-name:lf-out-l;animation-range:contain 50.54% contain 62.37%}
+
+      @media (max-width:950px){
+        /* height:auto + aspect-ratio is not a definite height, so the
+           percentage-sized filmstrip collapsed and every frame stacked at
+           natural size. Size it from aspect-ratio instead. */
+        .viewport{height:auto;aspect-ratio:var(--shot-ar);border-radius:26px}
+        .shot-strip{height:auto}
+        .shot{height:auto;aspect-ratio:var(--shot-ar)}
+        /* Portrait phones: copy on top, the device below it running off the
+           bottom edge. Sizing the device from its HEIGHT made it 134px wide on
+           a 402px screen, because aspect-ratio derives width from height. */
+        .stage{padding:80px 0 0;align-content:start}
+        .stage-inner{grid-template-columns:1fr;gap:12px;align-content:start;justify-items:center}
+        .copy{order:0;width:100%;height:32svh;overflow:clip}
+        .world{order:1;width:100%;display:grid;justify-items:center}
+        .stage{--dev-w:min(76vw,calc((68svh - 112px) * 390 / 844))}
+        .device{width:var(--dev-w);height:auto;aspect-ratio:390/844;border-width:7px;border-radius:32px}
+        .world{transform-origin:top center}
+        .viewport{border-radius:30px}
+        .slot{text-align:center;justify-items:center;align-content:center}
+        .slot h1,.slot h2{margin-bottom:8px;font-size:clamp(23px,5.9vw,29px);max-width:15ch;line-height:1.08}
+        .stage-lead{font-size:13px;line-height:1.5;max-width:30ch;margin-inline:auto}
+        .slot .stores{flex-direction:row;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:14px}
+        .slot .stores button{min-width:0;flex:1 1 150px;max-width:220px;padding:10px 12px}
+        .slot .stores span{font-size:12px}
+        .slot .store-note{display:none}
+        .slot .trust-row{display:none}
+        .slot .hero-actions{justify-content:center;margin-top:14px}
+        .slot .badge{margin-top:12px}
+        .world{animation-name:lf-dolly-m}
+        .fisy,.bubble,.float-card,.stage-cta{display:none}
+      }
     }
   }
 
