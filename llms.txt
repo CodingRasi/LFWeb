@@ -1,9 +1,9 @@
 # Lingofisy
 
-> Lingofisy is an English language-learning mobile app for iOS and Android. It
-> teaches practical, everyday English through short daily lessons, AI speaking
-> practice with spoken feedback, and spaced vocabulary review. The in-app coach
-> is named Fisy.
+> Lingofisy is a language-learning mobile app for iOS and Android, launching
+> with English, Turkish, Russian, German, French, Italian, Spanish and Portuguese.
+> It offers Daily courses, vocabulary review and progress tracking. AI speaking
+> is exclusively a paid Lingofisy Pro feature. The in-app coach is named Fisy.
 
 Lingofisy is operated from Berlin, Germany by Rasul Mammadov. The app is in
 development; the website currently announces it ahead of the App Store and
@@ -15,31 +15,38 @@ Google Play listings.
   instead of dropping every learner into the same beginner track.
 - **Short daily lessons.** Most daily activities take about 5 to 10 focused
   minutes, built around vocabulary, grammar, quizzes and sentence-building games.
-- **AI speaking practice.** Learners speak out loud and receive feedback on
-  clarity and expression rather than on accent. Unlimited speaking practice is
-  part of the paid Lingofisy Pro subscription.
+- **AI speaking practice (Pro only).** Learners speak out loud and receive
+  personalized feedback. Unlimited AI speaking requires a paid Lingofisy Pro
+  subscription. The free plan includes no AI speaking access or free allowance.
+- **Native-language support at A1 and A2.** Learners can view translations of
+  explanations in the native language they select during onboarding.
 - **Review that remembers.** Spaced repetition returns saved vocabulary before
   it is forgotten.
 - **Progress tracking.** Streaks, XP, coins and weekly accuracy.
 
 ## Learning paths
 
-- **General English** (CEFR A1 to C1) for everyday conversation and confidence.
-- **Business English** (B1 to C1) for meetings, email and presentations.
-- **IELTS preparation**, band-focused practice across speaking, listening,
-  reading and writing. Lingofisy is independent and is not affiliated with,
-  sponsored by or endorsed by the organizations that own or administer IELTS.
+- Daily English
+- Daily Turkish
+- Daily Russian
+- Daily German
+- Daily French
+- Daily Italian
+- Daily Spanish
+- Daily Portuguese
+
+Each Daily course focuses on everyday language learning.
 
 ## Who it is for
 
-Adult and young-adult learners who want usable English for work, travel, study
-and conversation, from beginner through advanced. Available in English.
+Learners who want practical language skills for everyday life, travel and
+conversation in one of the eight launch languages.
 
 ## Key pages
 
 - [Homepage](https://lingofisy.com/): what the app does, screens, learning paths.
 - [Terms of Use](https://lingofisy.com/legal/terms.html): subscriptions, AI
-  features, cancellation and refunds, IELTS disclaimer.
+  features, free-plan access, cancellation and refunds.
 - [Privacy Policy](https://lingofisy.com/legal/privacy.html): GDPR disclosures,
   processors, audio and AI data handling, data-subject rights.
 - [Imprint](https://lingofisy.com/legal/imprint.html): operator details under
