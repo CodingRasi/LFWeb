@@ -1,83 +1,371 @@
-const header=document.querySelector('[data-header]'),toggle=document.querySelector('.menu-toggle'),nav=document.querySelector('#main-nav');
-toggle?.addEventListener('click',()=>{const open=nav?.classList.toggle('open');toggle.setAttribute('aria-expanded',String(Boolean(open)))});
-nav?.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{nav.classList.remove('open');toggle?.setAttribute('aria-expanded','false')}));
-document.querySelectorAll('[data-store]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();alert('The Lingofisy app store links will be available at launch.')}));
-document.querySelectorAll('[data-year]').forEach(n=>n.textContent=String(new Date().getFullYear()));
+/* ============================================================
+   Lingofisy site behaviour.
 
-const consentKey='lingofisy-consent-v1',banner=document.querySelector('[data-consent-banner]'),modal=document.querySelector('[data-consent-modal]'),backdrop=document.querySelector('[data-consent-backdrop]');
-const consentRead=()=>{try{return JSON.parse(localStorage.getItem(consentKey)||'null')}catch{return null}};
-const consentWrite=analytics=>{localStorage.setItem(consentKey,JSON.stringify({essential:true,analytics:Boolean(analytics),updatedAt:new Date().toISOString()}));banner.hidden=true;modal.hidden=true;backdrop.hidden=true;document.body.classList.remove('consent-open')};
-const consentOpen=()=>{modal.hidden=false;backdrop.hidden=false;document.body.classList.add('consent-open');const saved=consentRead(),cb=modal.querySelector('[data-consent-analytics]');if(cb)cb.checked=Boolean(saved?.analytics)};
-const consentClose=()=>{modal.hidden=true;backdrop.hidden=true;document.body.classList.remove('consent-open')};
-const cs=document.createElement('button');cs.className='consent-settings-link';cs.type='button';cs.textContent='Privacy settings';cs.style.cssText='position:fixed;z-index:45;right:20px;bottom:20px;padding:8px 12px;border:1px solid #d8e5f3;border-radius:99px;color:#53617c;background:#ffffffe8;box-shadow:0 8px 22px #1421501f;cursor:pointer;font:700 11px Figtree,Arial,sans-serif';cs.addEventListener('click',consentOpen);document.body.append(cs);
-if(!consentRead())banner.hidden=false;
-document.querySelectorAll('[data-consent-accept]').forEach(b=>b.addEventListener('click',()=>consentWrite(true)));document.querySelectorAll('[data-consent-reject]').forEach(b=>b.addEventListener('click',()=>consentWrite(false)));document.querySelectorAll('[data-consent-customize]').forEach(b=>b.addEventListener('click',consentOpen));document.querySelectorAll('[data-consent-close]').forEach(b=>b.addEventListener('click',consentClose));document.querySelector('[data-consent-save]')?.addEventListener('click',()=>consentWrite(Boolean(modal.querySelector('[data-consent-analytics]')?.checked)));backdrop?.addEventListener('click',consentClose);addEventListener('keydown',e=>{if(e.key==='Escape'&&!modal.hidden)consentClose()});
+   Navigation note: the hero is a ~6 viewport tall pinned scroll
+   stage. Native `scroll-behavior:smooth` animated the full
+   distance at a fixed rate, which replayed the whole camera
+   sequence as a strobe every time someone clicked "FAQ". Scrolling
+   is handled here instead: short hops are eased, long hops land
+   instantly, and every target is offset by the fixed header.
+   ============================================================ */
 
-/* ---- stage support ----
-   The camera is pure CSS scroll timelines. JS only does what CSS cannot
-   read: the header colour over the dark half of the journey, deep links
-   into the stage, and reveals where animation-timeline is unsupported. */
-const calm=matchMedia('(prefers-reduced-motion:reduce)').matches;
-const hasIO='IntersectionObserver'in window;
-const hasTimeline=typeof CSS!=='undefined'&&CSS.supports&&CSS.supports('animation-timeline','view()');
-const story=document.querySelector('.story');
-const pinned=()=>hasTimeline&&!calm&&innerHeight>=560;
-const progress=()=>{
-  if(!story)return 0;
-  const r=story.getBoundingClientRect(),span=r.height-innerHeight;
-  return span<=0?0:Math.min(1,Math.max(0,-r.top/span));
+const header = document.querySelector('[data-header]');
+const toggle = document.querySelector('.menu-toggle');
+const nav = document.querySelector('#main-nav');
+const calm = matchMedia('(prefers-reduced-motion:reduce)').matches;
+const hasIO = 'IntersectionObserver' in window;
+const hasTimeline = typeof CSS !== 'undefined' && CSS.supports && CSS.supports('animation-timeline', 'view()');
+const story = document.querySelector('.story');
+const pinned = () => hasTimeline && !calm && innerHeight >= 560;
+const headerH = () => (header ? header.offsetHeight : 78) + 14;
+
+/* ---------- scrolling ---------- */
+/* smoothstep, the same curve the CSS camera uses */
+const ease = t => t * t * (3 - 2 * t);
+let scrollAnim = 0;
+
+const scrollToY = y => {
+  cancelAnimationFrame(scrollAnim);
+  const max = document.documentElement.scrollHeight - innerHeight;
+  const to = Math.max(0, Math.min(max, Math.round(y)));
+  const from = scrollY;
+  const dist = Math.abs(to - from);
+  if (dist < 2) return;
+
+  /* Past ~2.6 screens the pinned stage would flicker through every
+     keyframe on the way. Land directly instead. */
+  if (calm || dist > innerHeight * 2.6) { scrollTo(0, to); return; }
+
+  const dur = Math.min(820, 260 + dist * 0.22);
+  const t0 = performance.now();
+  const step = now => {
+    const k = Math.min(1, (now - t0) / dur);
+    scrollTo(0, from + (to - from) * ease(k));
+    if (k < 1) scrollAnim = requestAnimationFrame(step);
+  };
+  scrollAnim = requestAnimationFrame(step);
 };
 
-let ticking=false;
-const onScroll=()=>{
-  if(ticking)return; ticking=true;
-  requestAnimationFrame(()=>{
-    ticking=false;
-    header?.classList.toggle('scrolled',scrollY>12);
-    if(!pinned()){header?.classList.remove('on-dark');return}
-    const p=progress(),inStage=story.getBoundingClientRect().top<=1;
-    /* navy ground runs .18-.66, the closing gradient from .95 */
-    header?.classList.toggle('on-dark',inStage&&((p>.15&&p<.69)||p>.93));
+const scrollToTarget = el => {
+  if (!el) return;
+  if (el.id === 'top' || el === document.body) return scrollToY(0);
+  scrollToY(el.getBoundingClientRect().top + scrollY - headerH());
+};
+
+/* A seek is a position *inside* the pinned stage, expressed as a
+   fraction of its scrollable travel. Off the pinned layout the same
+   content is a stack of plain sections, so fall back to the slot. */
+const seekTo = (fraction, slotIndex) => {
+  if (!story) return;
+  if (pinned()) {
+    const span = story.offsetHeight - innerHeight;
+    return scrollToY(story.offsetTop + span * fraction);
+  }
+  const slots = document.querySelectorAll('.copy .slot');
+  scrollToTarget(slots[slotIndex] || story);
+};
+
+/* ---------- mobile menu ---------- */
+const menuOpen = () => nav?.classList.contains('open');
+const setMenu = open => {
+  if (!nav || !toggle) return;
+  nav.classList.toggle('open', open);
+  toggle.classList.toggle('is-open', open);
+  toggle.setAttribute('aria-expanded', String(open));
+  toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  document.body.classList.toggle('menu-open', open);
+};
+
+toggle?.addEventListener('click', () => setMenu(!menuOpen()));
+
+/* close on outside tap, on Escape, and when the layout grows past the
+   breakpoint while it is still open */
+addEventListener('pointerdown', e => {
+  if (menuOpen() && !e.target.closest('#main-nav') && !e.target.closest('.menu-toggle')) setMenu(false);
+});
+matchMedia('(min-width:951px)').addEventListener('change', e => { if (e.matches) setMenu(false); });
+
+/* ---------- in-page links ---------- */
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[href]');
+  if (!a || a.target === '_blank' || e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
+
+  const href = a.getAttribute('href');
+  if (!href || href.charAt(0) !== '#' || href === '#') return;
+
+  const target = document.querySelector(href);
+  if (!target) return;
+
+  e.preventDefault();
+  if (menuOpen()) setMenu(false);
+
+  if (a.dataset.seek !== undefined) {
+    seekTo(Number(a.dataset.seek) || 0, Number(a.dataset.slot) || 0);
+  } else {
+    scrollToTarget(target);
+  }
+
+  /* keep the address bar and the back button honest */
+  if (history.replaceState) history.replaceState(null, '', href);
+
+  /* move focus so keyboard and screen-reader users follow the jump */
+  if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+  target.focus({ preventScroll: true });
+});
+
+/* A hash in the URL is resolved before the stage's images have sized the page,
+   so the landing position drifts (/#get was landing in the FAQ). Re-apply it
+   once everything has settled. */
+if (location.hash.length > 1) {
+  addEventListener('load', () => {
+    let t = null;
+    try { t = document.querySelector(location.hash); } catch { /* not a selector */ }
+    if (t) setTimeout(() => scrollToTarget(t), 80);
+  });
+}
+
+/* ---------- third-party embeds: load on request ----------
+   The Tally form used to load with the page, so opening /affiliate/ contacted
+   tally.so and handed over the visitor's IP before they had any say. The src
+   now lives in a data attribute and only becomes a real iframe on click. */
+document.querySelectorAll('[data-form-load]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const gate = btn.closest('[data-form-gate]');
+    const src = gate?.dataset.formSrc;
+    if (!gate || !src) return;
+
+    const frame = document.createElement('iframe');
+    frame.src = src;
+    frame.title = gate.dataset.formTitle || 'Application form';
+    frame.width = '100%';
+    frame.height = '820';
+    frame.setAttribute('frameborder', '0');
+    frame.setAttribute('marginheight', '0');
+    frame.setAttribute('marginwidth', '0');
+
+    gate.classList.remove('aff-gate');
+    gate.replaceChildren(frame);
+
+    /* Tally's helper is what makes dynamicHeight work; it comes with the form,
+       not with the page. */
+    if (!document.querySelector('script[data-tally]')) {
+      const tally = document.createElement('script');
+      tally.src = 'https://tally.so/widgets/embed.js';
+      tally.async = true;
+      tally.dataset.tally = '1';
+      document.body.append(tally);
+    }
+    frame.focus?.();
+  });
+});
+
+/* ---------- store buttons ---------- */
+/* These used to fire a native alert(). The note under the buttons now
+   carries the message and flashes when one is pressed. */
+document.querySelectorAll('[data-store]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const note = btn.closest('.stores')?.parentElement?.querySelector('[data-store-note]');
+    if (!note) return;
+    note.classList.remove('is-flash');
+    void note.offsetWidth;
+    note.classList.add('is-flash');
+    setTimeout(() => note.classList.remove('is-flash'), 1600);
+  });
+});
+
+/* ---------- founding-price signup ----------
+   NOT YET WIRED. To go live, put your form endpoint in SIGNUP_ENDPOINT below
+   (a Tally form's POST URL, or any provider that accepts a form POST) and
+   nothing else needs to change.
+
+   Until then the form does NOT silently swallow addresses: it tells the
+   visitor to email us instead, which works today. */
+const SIGNUP_ENDPOINT = '';            /* <-- paste the endpoint here */
+const SIGNUP_FALLBACK_EMAIL = 'webmaster@lingofisy.com';
+
+document.querySelectorAll('[data-signup]').forEach(form => {
+  const note = form.parentElement?.querySelector('[data-signup-note]');
+  const field = form.querySelector('input[type="email"]');
+  const resting = note?.innerHTML;
+
+  const say = (html, state) => {
+    if (!note) return;
+    note.innerHTML = html;
+    note.classList.toggle('is-ok', state === 'ok');
+    note.classList.toggle('is-err', state === 'err');
+  };
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const email = (field?.value || '').trim();
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+      say('That email does not look right. Mind checking it?', 'err');
+      field?.focus();
+      return;
+    }
+
+    if (!SIGNUP_ENDPOINT) {
+      say('Sign-ups open shortly. Email <a href="mailto:' + SIGNUP_FALLBACK_EMAIL +
+          '?subject=Founding%20price">' + SIGNUP_FALLBACK_EMAIL +
+          '</a> and we will lock your founding price.', 'ok');
+      return;
+    }
+
+    form.classList.add('is-busy');
+    say(resting || '', null);
+    try {
+      const body = new FormData();
+      body.append('email', email);
+      const res = await fetch(SIGNUP_ENDPOINT, { method: 'POST', body });
+      if (!res.ok) throw new Error(res.status);
+      form.reset();
+      say('You are on the list. We will email you the day Lingofisy lands.', 'ok');
+    } catch {
+      say('That did not go through. Try again, or email <a href="mailto:' +
+          SIGNUP_FALLBACK_EMAIL + '">' + SIGNUP_FALLBACK_EMAIL + '</a>.', 'err');
+    } finally {
+      form.classList.remove('is-busy');
+    }
+  });
+
+  /* clear an error as soon as they start fixing it */
+  field?.addEventListener('input', () => {
+    if (note?.classList.contains('is-err')) say(resting || '', null);
+  });
+});
+
+document.querySelectorAll('[data-year]').forEach(n => { n.textContent = String(new Date().getFullYear()); });
+
+/* ---------- consent ---------- */
+const consentKey = 'lingofisy-consent-v1';
+const banner = document.querySelector('[data-consent-banner]');
+const modal = document.querySelector('[data-consent-modal]');
+const backdrop = document.querySelector('[data-consent-backdrop]');
+const consentRead = () => { try { return JSON.parse(localStorage.getItem(consentKey) || 'null'); } catch { return null; } };
+let consentReturn = null;
+
+const consentWrite = analytics => {
+  try {
+    localStorage.setItem(consentKey, JSON.stringify({ essential: true, analytics: Boolean(analytics), updatedAt: new Date().toISOString() }));
+  } catch { /* private mode: the choice simply is not remembered */ }
+  if (banner) banner.hidden = true;
+  if (modal) modal.hidden = true;
+  if (backdrop) backdrop.hidden = true;
+  document.body.classList.remove('consent-open');
+  consentReturn?.focus();
+};
+const consentOpen = () => {
+  if (!modal) return;
+  consentReturn = document.activeElement;
+  modal.hidden = false;
+  if (backdrop) backdrop.hidden = false;
+  document.body.classList.add('consent-open');
+  const cb = modal.querySelector('[data-consent-analytics]');
+  if (cb) cb.checked = Boolean(consentRead()?.analytics);
+  modal.querySelector('[data-consent-close]')?.focus();
+};
+const consentClose = () => {
+  if (modal) modal.hidden = true;
+  if (backdrop) backdrop.hidden = true;
+  document.body.classList.remove('consent-open');
+  consentReturn?.focus();
+};
+
+if (banner && !consentRead()) banner.hidden = false;
+document.querySelectorAll('[data-consent-accept]').forEach(b => b.addEventListener('click', () => consentWrite(true)));
+document.querySelectorAll('[data-consent-reject]').forEach(b => b.addEventListener('click', () => consentWrite(false)));
+document.querySelectorAll('[data-consent-customize]').forEach(b => b.addEventListener('click', consentOpen));
+document.querySelectorAll('[data-consent-close]').forEach(b => b.addEventListener('click', consentClose));
+document.querySelector('[data-consent-save]')?.addEventListener('click', () => consentWrite(Boolean(modal?.querySelector('[data-consent-analytics]')?.checked)));
+backdrop?.addEventListener('click', consentClose);
+
+addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (modal && !modal.hidden) return consentClose();
+  if (menuOpen()) setMenu(false);
+});
+
+/* ---------- header state ---------- */
+/* CSS owns the camera. JS only reads what CSS cannot: how dark the
+   ground under the header is, and which nav item is current. */
+const progress = () => {
+  if (!story) return 0;
+  const r = story.getBoundingClientRect(), span = r.height - innerHeight;
+  return span <= 0 ? 0 : Math.min(1, Math.max(0, -r.top / span));
+};
+
+const navLinks = [...(nav?.querySelectorAll('a[href^="#"]') || [])];
+const SLOT_REST = [.02, .14, .75, .82, .88, .96];
+let currentNav = null;
+
+const markCurrent = () => {
+  const faq = document.querySelector('#faq');
+  let want = null;
+
+  if (faq && faq.getBoundingClientRect().top <= headerH() + 4) {
+    want = navLinks.find(a => a.getAttribute('href') === '#faq') || null;
+  } else if (pinned()) {
+    const p = progress();
+    const seeks = navLinks.filter(a => a.dataset.seek !== undefined);
+    want = seeks.reduce((best, a) => {
+      const d = Math.abs(p - Number(a.dataset.seek));
+      return !best || d < best.d ? { a, d } : best;
+    }, null);
+    want = want && want.d < .07 ? want.a : null;
+  }
+
+  if (want === currentNav) return;
+  currentNav?.removeAttribute('aria-current');
+  want?.setAttribute('aria-current', 'true');
+  currentNav = want;
+};
+
+let ticking = false;
+const onScroll = () => {
+  if (ticking) return;
+  ticking = true;
+  requestAnimationFrame(() => {
+    ticking = false;
+    header?.classList.toggle('scrolled', scrollY > 12);
+    markCurrent();
+    if (!pinned() || !story) { header?.classList.remove('on-dark'); return; }
+    const p = progress(), inStage = story.getBoundingClientRect().top <= 1;
+    /* navy ground is solid .1828-.6984, the closing gradient from .9242 */
+    header?.classList.toggle('on-dark', inStage && ((p > .17 && p < .71) || p > .93));
   });
 };
-addEventListener('scroll',onScroll,{passive:true});
-addEventListener('resize',onScroll,{passive:true});
+addEventListener('scroll', onScroll, { passive: true });
+addEventListener('resize', onScroll, { passive: true });
 onScroll();
 
-document.querySelectorAll('[data-seek]').forEach(a=>a.addEventListener('click',e=>{
-  if(!pinned()||!story)return;
-  e.preventDefault();
-  const f=Number(a.dataset.seek)||0,span=story.offsetHeight-innerHeight;
-  scrollTo({top:story.offsetTop+span*f,behavior:'smooth'});
-}));
-
-if(!calm&&hasIO&&!hasTimeline){
+/* ---------- reveals where scroll timelines are unsupported ---------- */
+if (!calm && hasIO && !hasTimeline) {
   document.documentElement.classList.add('js-reveal');
-  const sel='.slot,.world,.faq-head>*,.faq-list details,.get-strip>div';
-  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{rootMargin:'0px 0px -10% 0px',threshold:.14});
-  document.querySelectorAll(sel).forEach(n=>io.observe(n));
+  const sel = '.slot,.world,.faq-head>*,.faq-list details,.get-strip>div';
+  const io = new IntersectionObserver(
+    es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }),
+    { rootMargin: '0px 0px -10% 0px', threshold: .14 }
+  );
+  document.querySelectorAll(sel).forEach(n => io.observe(n));
 }
 
 /* Keyboard focus drives the stage.
-   The six copy slots live in a clipped filmstrip, so tabbing into a slot that
-   is currently off-stage would put focus somewhere invisible. Rather than hide
-   that content from assistive tech (which is what aria-hidden was doing, and
-   why screen readers only ever got the hero), the stage scrolls to whichever
-   slot the user tabbed into. Focus is always visible, nothing is duplicated,
-   and the full page stays in the accessibility tree. */
-const SLOT_REST=[.02,.14,.75,.82,.88,.96];
-const copyCol=document.querySelector('.copy');
-if(copyCol&&story){
-  let jumping=false;
-  copyCol.addEventListener('focusin',e=>{
-    if(!pinned()||jumping)return;
-    const slot=e.target.closest('.slot');
-    if(!slot)return;
-    const i=[...copyCol.querySelectorAll('.slot')].indexOf(slot);
-    const want=SLOT_REST[i];
-    if(want===undefined||Math.abs(progress()-want)<.04)return;
-    jumping=true;
-    scrollTo({top:story.offsetTop+(story.offsetHeight-innerHeight)*want,behavior:'smooth'});
-    setTimeout(()=>{jumping=false},650);
+   The six copy slots live in a clipped filmstrip, so tabbing into a slot
+   that is currently off-stage would put focus somewhere invisible. The
+   stage scrolls to whichever slot the user tabbed into, so focus is
+   always visible and nothing has to be hidden from assistive tech. */
+const copyCol = document.querySelector('.copy');
+if (copyCol && story) {
+  let jumping = false;
+  copyCol.addEventListener('focusin', e => {
+    if (!pinned() || jumping) return;
+    const slot = e.target.closest('.slot');
+    if (!slot) return;
+    const want = SLOT_REST[[...copyCol.querySelectorAll('.slot')].indexOf(slot)];
+    if (want === undefined || Math.abs(progress() - want) < .04) return;
+    jumping = true;
+    scrollToY(story.offsetTop + (story.offsetHeight - innerHeight) * want);
+    setTimeout(() => { jumping = false; }, 700);
   });
 }
