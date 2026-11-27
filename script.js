@@ -16,7 +16,9 @@ const calm = matchMedia('(prefers-reduced-motion:reduce)').matches;
 const hasIO = 'IntersectionObserver' in window;
 const hasTimeline = typeof CSS !== 'undefined' && CSS.supports && CSS.supports('animation-timeline', 'view()');
 const story = document.querySelector('.story');
-const pinned = () => hasTimeline && !calm && innerHeight >= 560;
+/* Mirrors the media query that gates the pinned stage: the hero's waitlist
+   form needs 760px of height on a narrow screen. */
+const pinned = () => hasTimeline && !calm && innerHeight >= 560 && (innerWidth >= 951 || innerHeight >= 760);
 const headerH = () => (header ? header.offsetHeight : 78) + 14;
 
 /* ---------- scrolling ---------- */
@@ -126,8 +128,36 @@ if (location.hash.length > 1) {
 
 /* ---------- third-party embeds: load on request ----------
    The Tally form used to load with the page, so opening /affiliate/ contacted
-   tally.so and handed over the visitor's IP before they had any say. The src
-   now lives in a data attribute and only becomes a real iframe on click. */
+   tally.so and handed over the visitor's IP before they had any say. Nothing
+   here touches tally.so until a visitor asks for a form: the affiliate iframe
+   keeps its src in a data attribute, and the waitlist popup below shares the
+   loader underneath. */
+const TALLY_EMBED = 'https://tally.so/widgets/embed.js';
+
+/* Resolves once Tally's widget script is in and rejects if it cannot load, so
+   a caller can fall back instead of waiting forever. Injected at most once
+   however many things ask for it. */
+let tallyLoading = null;
+const loadTally = () => {
+  if (window.Tally) return Promise.resolve();
+  if (tallyLoading) return tallyLoading;
+  tallyLoading = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = TALLY_EMBED;
+    script.async = true;
+    script.dataset.tally = '1';
+    script.addEventListener('load', () => resolve());
+    script.addEventListener('error', () => {
+      /* Cleared so a second attempt can retry rather than reject forever. */
+      tallyLoading = null;
+      script.remove();
+      reject(new Error('tally embed failed to load'));
+    });
+    document.body.append(script);
+  });
+  return tallyLoading;
+};
+
 document.querySelectorAll('[data-form-load]').forEach(btn => {
   btn.addEventListener('click', () => {
     const gate = btn.closest('[data-form-gate]');
@@ -147,14 +177,9 @@ document.querySelectorAll('[data-form-load]').forEach(btn => {
     gate.replaceChildren(frame);
 
     /* Tally's helper is what makes dynamicHeight work; it comes with the form,
-       not with the page. */
-    if (!document.querySelector('script[data-tally]')) {
-      const tally = document.createElement('script');
-      tally.src = 'https://tally.so/widgets/embed.js';
-      tally.async = true;
-      tally.dataset.tally = '1';
-      document.body.append(tally);
-    }
+       not with the page. The iframe renders without it, so a failure here is
+       not worth telling the visitor about. */
+    loadTally().catch(() => {});
     frame.focus?.();
   });
 });
@@ -173,65 +198,46 @@ document.querySelectorAll('[data-store]').forEach(btn => {
   });
 });
 
-/* ---------- founding-price signup ----------
-   NOT YET WIRED. To go live, put your form endpoint in SIGNUP_ENDPOINT below
-   (a Tally form's POST URL, or any provider that accepts a form POST) and
-   nothing else needs to change.
+/* ---------- waitlist ----------
+   Lingofisy has not launched, so joining the waitlist is the only conversion on
+   the page. The list itself is a Tally form: this site is static, so the
+   addresses and the email that goes to them live with Tally, and nothing here
+   holds a secret or stores anyone's address.
 
-   Until then the form does NOT silently swallow addresses: it tells the
-   visitor to email us instead, which works today. */
-const SIGNUP_ENDPOINT = '';            /* <-- paste the endpoint here */
-const SIGNUP_FALLBACK_EMAIL = 'webmaster@lingofisy.com';
+   Every trigger is a real link to the hosted form. JavaScript upgrades that
+   link into Tally's popup so the visitor never leaves the page; if the widget
+   is blocked or fails to load, the link still works on its own. Either way
+   nothing contacts tally.so until someone actually asks for the form. */
+const WAITLIST_FORM = 'M1RAlE';
+const WAITLIST_URL = `https://tally.so/r/${WAITLIST_FORM}`;
 
-document.querySelectorAll('[data-signup]').forEach(form => {
-  const note = form.parentElement?.querySelector('[data-signup-note]');
-  const field = form.querySelector('input[type="email"]');
-  const resting = note?.innerHTML;
+const openWaitlist = async () => {
+  await loadTally();
+  if (typeof window.Tally?.openPopup !== 'function') {
+    throw new Error('tally popup is unavailable');
+  }
+  window.Tally.openPopup(WAITLIST_FORM, { layout: 'modal', width: 460, autoClose: 3000 });
+};
 
-  const say = (html, state) => {
-    if (!note) return;
-    note.innerHTML = html;
-    note.classList.toggle('is-ok', state === 'ok');
-    note.classList.toggle('is-err', state === 'err');
-  };
+document.querySelectorAll('[data-waitlist-open]').forEach(trigger => {
+  trigger.addEventListener('click', event => {
+    /* A modified or middle click means "open it in a new tab" — let the link
+       do exactly that. */
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+    event.preventDefault();
+    if (trigger.getAttribute('aria-busy') === 'true') return;
 
-  form.addEventListener('submit', async e => {
-    e.preventDefault();
-    const email = (field?.value || '').trim();
-
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
-      say('That email does not look right. Mind checking it?', 'err');
-      field?.focus();
-      return;
-    }
-
-    if (!SIGNUP_ENDPOINT) {
-      say('Sign-ups open shortly. Email <a href="mailto:' + SIGNUP_FALLBACK_EMAIL +
-          '?subject=Founding%20price">' + SIGNUP_FALLBACK_EMAIL +
-          '</a> and we will lock your founding price.', 'ok');
-      return;
-    }
-
-    form.classList.add('is-busy');
-    say(resting || '', null);
-    try {
-      const body = new FormData();
-      body.append('email', email);
-      const res = await fetch(SIGNUP_ENDPOINT, { method: 'POST', body });
-      if (!res.ok) throw new Error(res.status);
-      form.reset();
-      say('You are on the list. We will email you the day Lingofisy lands.', 'ok');
-    } catch {
-      say('That did not go through. Try again, or email <a href="mailto:' +
-          SIGNUP_FALLBACK_EMAIL + '">' + SIGNUP_FALLBACK_EMAIL + '</a>.', 'err');
-    } finally {
-      form.classList.remove('is-busy');
-    }
-  });
-
-  /* clear an error as soon as they start fixing it */
-  field?.addEventListener('input', () => {
-    if (note?.classList.contains('is-err')) say(resting || '', null);
+    trigger.setAttribute('aria-busy', 'true');
+    openWaitlist()
+      .catch(() => {
+        /* The popup could not open, so fall back to the page the link points
+           at rather than leaving the visitor with a button that does nothing.
+           A new tab, to match the target the markup asks for; if the browser
+           blocks it, go there in this one instead of silently doing nothing. */
+        const href = trigger.getAttribute('href') || WAITLIST_URL;
+        if (!window.open(href, '_blank', 'noopener')) location.href = href;
+      })
+      .finally(() => trigger.removeAttribute('aria-busy'));
   });
 });
 

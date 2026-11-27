@@ -42,6 +42,13 @@ Each Daily course focuses on everyday language learning.
 Learners who want practical language skills for everyday life, travel and
 conversation in one of the eight launch languages.
 
+## Waitlist
+
+The app has not launched. The hero button on the website opens a waitlist form hosted
+by Tally: an email address, plus one optional box for occasional updates. Joining is
+free, no account is created, and the address is the only thing collected. No launch
+date has been announced. There is no giveaway, promotion or prize draw running.
+
 ## Key pages
 
 - [Homepage](https://lingofisy.com/): what the app does, screens, learning paths.

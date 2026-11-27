@@ -1,0 +1,8 @@
+# Local Supabase state and function secrets. Nothing in here may be committed:
+# the service-role key, the Resend key and the IP salt live only in the function
+# environment on Supabase, and in an untracked env file for local runs.
+supabase/.env
+supabase/.env.*
+supabase/.temp/
+supabase/.branches/
+.DS_Store
